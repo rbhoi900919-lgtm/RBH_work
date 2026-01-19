@@ -1,0 +1,604 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幼儿园作业进度追踪</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fef7ff;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FFB6C1' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-page {
+            height: 66.67vh;
+            overflow: auto;
+            padding: 10px 20px 20px;
+            box-sizing: border-box;
+            border-bottom: 3px solid #e2e8f0;
+        }
+
+        .bottom-page {
+            height: 33.33vh;
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .celebration-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FF6B6B, #FFE66D);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .celebration-toast.show {
+            opacity: 1;
+        }
+
+        .container {
+            position: relative;
+        }
+
+        .container::before,
+        .container::after {
+            content: '';
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background-repeat: no-repeat;
+            background-size: contain;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .container::before {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%23FF6B6B" d="M466.5 83.7l-192-80a48.15 48.15 0 0 0-36.9 0l-192 80C27.7 91.1 16 108.6 16 128c0 198.5 114.5 335.7 221.5 380.3 11.8 4.9 25.1 4.9 36.9 0C360.1 472.6 496 349.3 496 128c0-19.4-11.7-36.9-29.5-44.3zm-47.2 114.2l-184 184c-6.2 6.2-16.4 6.2-22.6 0l-104-104c-6.2-6.2-6.2-16.4 0-22.6l22.6-22.6c6.2-6.2 16.4-6.2 22.6 0l70.1 70.1 150.1-150.1c6.2-6.2 16.4-6.2 22.6 0l22.6 22.6c6.3 6.3 6.3 16.4 0 22.6z"/></svg>');
+            top: -50px;
+            right: -50px;
+            transform: rotate(15deg);
+        }
+
+        .container::after {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%234ECDC4" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm146.4 349.5c-1.6 1.6-3.5 2.3-5.4 2.3s-3.8-.7-5.4-2.3l-73.1-73.1c-29.4 15.7-63.5 24.2-99.9 24.2-110.5 0-200-89.5-200-200s89.5-200 200-200 200 89.5 200 200c0 36.4-8.5 70.5-24.2 99.9l73.1 73.1z"/></svg>');
+            bottom: -50px;
+            left: -50px;
+            transform: rotate(-15deg);
+        }
+
+        .btn-homework {
+            transition: all 0.3s ease;
+            border: 2px solid #cbd5e1;
+            background-color: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-homework:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-homework:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-homework.completed {
+            background-color: #4ade80;
+            color: white;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: fall 3s ease-in-out forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .student-card {
+            transition: all 0.3s ease;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #FFE66D);
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .image-container {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+            max-width: 100%;
+        }
+
+        .image-number {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            background-color: #f43f5e;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .edit-name {
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 2px dashed transparent;
+            transition: all 0.3s ease;
+            text-transform: capitalize;
+        }
+
+        .edit-name:focus {
+            outline: none;
+            border-bottom: 2px dashed #3b82f6;
+        }
+
+        .edit-number {
+            background: transparent;
+            border: none;
+            font-size: 0.875rem;
+            color: #64748b;
+            width: 30px;
+            text-align: center;
+        }
+
+        .edit-number:focus {
+            outline: none;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+        }
+
+
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="page-container">
+        <div class="top-page">
+            <div class="container mx-auto px-4">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-transparent bg-clip-text mb-2" style="font-size: 24px; text-align: left; line-height: 30px;">K2A &nbsp;功課完成榜</h1>
+            <p class="text-lg text-gray-600">
+</p>
+        </header>
+
+        <main>
+            <!-- 图片上传区域 -->
+            <section class="mb-12">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <h2 class="text-xl font-bold text-gray-700">有甚麼功課？</h2>
+                    <div class="flex gap-2">
+                        <label for="fileInput" class="bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg cursor-pointer inline-flex items-center text-sm">
+                            <i data-lucide="upload-cloud" class="w-5 h-5 mr-1"></i>
+                            上傳功課圖片
+                        </label>
+                        <label for="bgImageInput" class="bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg cursor-pointer inline-flex items-center text-sm">
+                            <i data-lucide="image" class="w-5 h-5 mr-1"></i>
+                            更換背景
+                        </label>
+                    </div>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*" multiple="">
+                    <input type="file" id="bgImageInput" class="hidden" accept="image/*">
+                </div>
+                <div id="imageDisplay" class="flex flex-wrap justify-center"></div>
+            </section>
+
+
+        </main>
+            </div>
+        </div>
+        <div class="bottom-page">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-700">K2A</h2>
+                    <button id="resetAll" class="bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg">
+                        <i data-lucide="refresh-cw" class="w-5 h-5 inline-block mr-2"></i>一键重置
+                    </button>
+                </div>
+                <div id="studentList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <!-- 学生卡片将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="celebrationToast" class="celebration-toast">
+        <span id="celebrationText"></span>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // 初始化数据
+        // 分离学生基本信息和作业状态
+        let studentInfo = JSON.parse(localStorage.getItem('kindergartenStudentInfo')) || Array.from({length: 22}, (_, i) => ({
+            id: i + 1,
+            name: `小朋友${i + 1}`
+        }));
+        let studentHomeworks = JSON.parse(localStorage.getItem('kindergartenStudentHomeworks')) || Array.from({length: 22}, () => [false, false, false]);
+
+        // 合并学生信息和作业状态
+        let students = studentInfo.map((info, index) => ({
+            ...info,
+            homeworks: studentHomeworks[index] || [false, false, false]
+        }));
+
+        let homeworkImages = JSON.parse(localStorage.getItem('homeworkImages')) || [];
+        let lastSaved = localStorage.getItem('lastSaved') || new Date().toISOString();
+
+        // 检查数据是否过期（7天）
+        const checkDataExpiry = () => {
+            const now = new Date();
+            const savedDate = new Date(lastSaved);
+            const diffTime = Math.abs(now - savedDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 7) {
+                localStorage.clear();
+                students = Array.from({length: 22}, (_, i) => ({
+                    id: i + 1,
+                    name: `小朋友${i + 1}`,
+                    homeworks: [false, false, false]
+                }));
+                homeworkImages = [];
+                lastSaved = new Date().toISOString();
+                saveData();
+            }
+        };
+
+        // 保存数据到本地存储
+        const saveData = () => {
+            // 分离学生信息和作业状态
+            const studentInfo = students.map(({ id, name }) => ({ id, name }));
+            const studentHomeworks = students.map(({ homeworks }) => homeworks);
+            
+            localStorage.setItem('kindergartenStudentInfo', JSON.stringify(studentInfo));
+            localStorage.setItem('kindergartenStudentHomeworks', JSON.stringify(studentHomeworks));
+            localStorage.setItem('homeworkImages', JSON.stringify(homeworkImages));
+            localStorage.setItem('lastSaved', new Date().toISOString());
+        };
+
+        // 渲染学生列表
+        const renderStudents = () => {
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+
+            students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = 'student-card bg-white rounded-xl shadow-md overflow-hidden';
+                card.innerHTML = `
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-4 relative">
+                            <div>
+                                <input type="number" value="${student.id}" class="edit-number mr-2" data-id="${student.id}">
+                                <input type="text" value="${student.name}" class="edit-name" data-id="${student.id}">
+                                ${student.homeworks.every(h => h) ? '<i data-lucide="crown" class="w-6 h-6 text-yellow-400 absolute -top-2 -right-2"></i>' : ''}
+                            </div>
+                        </div>
+                        <div class="flex justify-center space-x-2">
+                            ${student.homeworks.map((completed, index) => `
+                                <button class="btn-homework w-12 h-12 rounded-full flex items-center justify-center ${completed ? 'completed' : ''}" 
+                                        data-student-id="${student.id}" 
+                                        data-homework-index="${index}">
+                                    <span class="text-lg font-bold">${index === 0 ? '中' : index === 1 ? '英' : '數'}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                studentList.appendChild(card);
+            });
+
+            // 添加事件监听器
+            document.querySelectorAll('.edit-name').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const studentId = parseInt(e.target.dataset.id);
+                    const student = students.find(s => s.id === studentId);
+                    if (student) {
+                        student.name = e.target.value;
+                        saveData();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-number').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const studentId = parseInt(e.target.dataset.id);
+                    const newNumber = parseInt(e.target.value);
+                    if (!isNaN(newNumber) && newNumber > 0) {
+                        const student = students.find(s => s.id === studentId);
+                        if (student) {
+                            student.id = newNumber;
+                            e.target.value = newNumber;
+                            saveData();
+                            renderStudents(); // 重新渲染以更新顺序
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-homework').forEach(button => {
+                button.addEventListener('click', toggleHomework);
+            });
+        };
+
+        // 渲染图片
+        const renderImages = () => {
+            const imageDisplay = document.getElementById('imageDisplay');
+            imageDisplay.innerHTML = '';
+
+            homeworkImages.forEach((image, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-container relative';
+                container.innerHTML = `
+                    <div class="absolute top-0 right-0 m-2">
+                        <button class="delete-image bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors" data-index="${index}">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="image-number">${index === 0 ? '中' : index === 1 ? '英' : '數'}</div>
+                    <img src="${image}" alt="作业 ${index + 1}" class="max-w-full h-64 md:h-80 object-contain rounded-lg shadow-md">
+                `;
+                imageDisplay.appendChild(container);
+            });
+            
+            // 添加删除图片的事件监听器
+            document.querySelectorAll('.delete-image').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    homeworkImages.splice(index, 1);
+                    saveData();
+                    renderImages();
+                });
+            });
+            
+            // 重新渲染图标
+            lucide.createIcons();
+        };
+
+        // 切换作业完成状态
+        const toggleHomework = (e) => {
+            const studentId = parseInt(e.target.dataset.studentId);
+            const homeworkIndex = parseInt(e.target.dataset.homeworkIndex);
+            const student = students.find(s => s.id === studentId);
+            
+            if (student) {
+                student.homeworks[homeworkIndex] = !student.homeworks[homeworkIndex];
+                e.target.classList.toggle('completed', student.homeworks[homeworkIndex]);
+                saveData();
+
+                // 检查是否所有作业都完成了
+                if (student.homeworks.every(h => h)) {
+                    celebrate(studentId);
+                    showCelebrationToast(student.name);
+                }
+            }
+        };
+
+        // 庆祝动画
+        const celebrate = (studentId) => {
+            // 创建 confetti
+            for (let i = 0; i < 100; i++) {
+                createConfetti();
+            }
+
+            // 播放音效
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
+            audio.play().catch(e => console.log('无法播放音效:', e));
+
+            // 找到学生
+            const student = students.find(s => s.id === studentId);
+        };
+
+        // 创建 confetti
+        const createConfetti = () => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // 随机颜色
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 随机位置和大小
+            confetti.style.left = `${Math.random() * 100}vw`;
+            confetti.style.width = `${Math.random() * 10 + 5}px`;
+            confetti.style.height = `${Math.random() * 10 + 5}px`;
+            
+            // 随机动画持续时间和延迟
+            confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+            confetti.style.animationDelay = `${Math.random() * 2}s`;
+            
+            document.body.appendChild(confetti);
+            
+            // 动画结束后移除
+            setTimeout(() => {
+                confetti.remove();
+            }, 5000);
+        };
+
+        // 重置所有作业
+        document.getElementById('resetAll').addEventListener('click', () => {
+            if (confirm('确定要重置所有小朋友的作业进度吗？')) {
+                // 只重置作业状态，保留学生信息
+                students.forEach(student => {
+                    student.homeworks = [false, false, false];
+                });
+                saveData();
+                renderStudents();
+                showToast('作业进度已重置！');
+            }
+        });
+
+        // 显示庆祝提示
+        const showCelebrationToast = (studentName) => {
+            const toast = document.getElementById('celebrationToast');
+            const text = document.getElementById('celebrationText');
+            text.textContent = `${studentName} 完成了所有作业！太棒了！🎉`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        // 图片上传
+        const fileInput = document.getElementById('fileInput');
+
+        // 添加图片上传反馈
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                // 显示上传中提示
+                showToast(`正在处理 ${fileInput.files.length} 张图片...`);
+                handleFiles(fileInput.files);
+            }
+        });
+
+        const handleFiles = (files) => {
+            const maxFileSize = 5 * 1024 * 1024; // 5MB
+            const validFiles = [];
+            let invalidCount = 0;
+
+            // 验证文件
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    invalidCount++;
+                    return;
+                }
+                if (file.size > maxFileSize) {
+                    invalidCount++;
+                    return;
+                }
+                validFiles.push(file);
+            });
+
+            if (invalidCount > 0) {
+                showToast(`有 ${invalidCount} 个文件不是有效的图片或过大，请重试。`, true);
+            }
+
+            if (validFiles.length === 0) {
+                return;
+            }
+
+            // 处理有效的文件
+            let processedCount = 0;
+            validFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        homeworkImages.push(e.target.result);
+                        processedCount++;
+                        
+                        if (processedCount === validFiles.length) {
+                            saveData();
+                            renderImages();
+                            showToast(`成功上传 ${processedCount} 张图片！`);
+                        }
+                    } catch (error) {
+                        console.error('处理图片失败:', error);
+                        showToast('图片处理失败，请重试。', true);
+                    }
+                };
+                reader.onerror = () => {
+                    console.error('读取文件失败');
+                    showToast('文件读取失败，请重试。', true);
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        // 显示提示信息
+        const showToast = (message, isError = false) => {
+            // 检查是否已存在toast，如果有则移除
+            const existingToast = document.getElementById('uploadToast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.id = 'uploadToast';
+            toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 ${
+                isError ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // 淡入
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 10);
+
+            // 淡出并移除
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        };
+
+        // 初始化
+        checkDataExpiry();
+        renderStudents();
+        renderImages();
+    </script>
+
+</body></html>
